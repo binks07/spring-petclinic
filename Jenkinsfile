@@ -32,13 +32,13 @@ pipeline {
         stage('Run Application') {
             steps {
                 // Run the application on a different port to avoid conflicts
-                sh 'nohup java -jar target/*.jar --server.port=8085 &'
+                sh 'nohup java -jar target/*.jar --server.port=8085'
             }
         }
     }
     post {
         success {
-            echo 'Build completed successfully! Application is running at http://localhost:9090'
+            echo 'Build completed successfully! Application is running at http://localhost:8085'
         }
         failure {
             echo 'Build failed!'
