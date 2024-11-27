@@ -32,7 +32,7 @@ pipeline {
         stage('Run Application') {
             steps {
                 // Run the application on a different port to avoid conflicts
-                sh 'nohup java -jar target/*.jar --server.port=9090 &'
+                sh 'nohup java -jar target/*.jar --server.port=8085 &'
             }
         }
     }
