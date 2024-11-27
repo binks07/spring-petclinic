@@ -1,7 +1,8 @@
 pipeline {
     agent any
     environment {
-        MAVEN_HOME = tool 'Maven' // Ensure you have configured Maven in Jenkins Global Tool Configuration
+        MAVEN_HOME = tool name: 'Maven', type: 'maven'
+        PATH = "${MAVEN_HOME}/bin:${env.PATH}" // Add Maven to the PATH
     }
     stages {
         stage('Checkout') {
@@ -13,25 +14,19 @@ pipeline {
         stage('Build') {
             steps {
                 // Use Maven to clean and build the project
-                withEnv(["PATH+MAVEN=\${MAVEN_HOME}/bin"]) {
-                    sh 'mvn clean install -DskipTests'
-                }
+                sh 'mvn clean install -DskipTests'
             }
         }
         stage('Test') {
             steps {
                 // Run the unit tests
-                withEnv(["PATH+MAVEN=\${MAVEN_HOME}/bin"]) {
-                    sh 'mvn test'
-                }
+                sh 'mvn test'
             }
         }
         stage('Package') {
             steps {
                 // Create the executable JAR file
-                withEnv(["PATH+MAVEN=\${MAVEN_HOME}/bin"]) {
-                    sh 'mvn package'
-                }
+                sh 'mvn package'
             }
         }
         stage('Run Application') {
