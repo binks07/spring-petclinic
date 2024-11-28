@@ -1,43 +1,48 @@
 pipeline {
     agent any
     tools {
-        jdk 'jdk17'
-        maven 'maven-3.8'
+        maven 'Maven' // Use the defined Maven tool configuration in Jenkins
     }
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main', url: 'https://github.com/spring-projects/spring-petclinic.git'
             }
         }
         stage('Clean') {
             steps {
                 echo 'Cleaning up previous build artifacts...'
-                sh 'rm -rf target'
+                sh 'rm -rf target' // Clean up the previous build's target directory
             }
         }
         stage('Build') {
             steps {
-                echo 'Building the application...'
-                sh './mvnw clean package -DskipTests'
+                // Build the application
+                sh '''
+                    chmod +x mvnw
+                    ./mvnw clean package -DskipTests
+                '''
             }
+        }
+        
         }
         stage('Run Application') {
             steps {
-                echo 'Running the Petclinic application on port 8085...'
-                sh 'nohup java -jar target/spring-petclinic-3.4.0-SNAPSHOT.jar --server.port=8085 > petclinic.log 2>&1 &'
+                // Run the application on a different port to avoid conflicts
+                sh '''
+                    cd target
+                    nohup java -jar spring-petclinic-*.jar --server.port=8085 > petclinic.log 2>&1 &
+                    sleep 60
+                '''
             }
         }
     }
     post {
-        always {
-            echo 'Build, analysis, or execution completed!'
-        }
         success {
-            echo 'The build was successful!'
+            echo 'Build,and execution completed successfully! Application is running at http://localhost:8085'
         }
         failure {
-            echo 'The build failed!'
+            echo 'Build, analysis, or execution failed!'
         }
     }
 }
