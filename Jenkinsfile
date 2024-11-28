@@ -25,7 +25,7 @@ pipeline {
                 sh '''
                     cd target
                     nohup java -jar spring-petclinic-*.jar --server.port=8085 > petclinic.log 2>&1 &
-                    sleep 30
+                    sleep 300
                 '''
             }
         }
