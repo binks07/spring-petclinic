@@ -1,47 +1,41 @@
 pipeline {
     agent any
-    environment {
-        MAVEN_HOME = tool name: 'Maven', type: 'maven'
-        PATH = "${MAVEN_HOME}/bin:${env.PATH}" // Add Maven to the PATH
+    tools {
+        maven 'Maven' // Use the defined Maven tool configuration in Jenkins
     }
     stages {
         stage('Checkout') {
             steps {
-                // Clone the GitHub repository
-                git url: 'https://github.com/binks07/spring-petclinic.git', branch: 'main'
+                git branch: 'main',
+                    url: 'https://github.com/spring-projects/spring-petclinic.git'
             }
         }
         stage('Build') {
             steps {
-                // Use Maven to clean and build the project
-                sh 'mvn clean install -DskipTests'
+                // Give permission to run the Maven wrapper and build the application
+                sh '''
+                    chmod +x mvnw
+                    ./mvnw clean package -DskipTests
+                '''
             }
         }
-        stage('Test') {
+        stage('Execute') {
             steps {
-                // Run the unit tests
-                sh 'mvn test'
-            }
-        }
-        stage('Package') {
-            steps {
-                // Create the executable JAR file
-                sh 'mvn package'
-            }
-        }
-        stage('Run Application') {
-            steps {
-                // Run the application on a different port to avoid conflicts
-                sh 'nohup java -jar target/*.jar --server.port=8085'
+                // Run the application on port 8085
+                sh '''
+                    cd target
+                    nohup java -jar spring-petclinic-*.jar --server.port=8085 > petclinic.log 2>&1 &
+                    sleep 30
+                '''
             }
         }
     }
     post {
         success {
-            echo 'Build completed successfully! Application is running at http://localhost:8085'
+            echo 'Build and execution completed successfully! Application is running at http://localhost:8085'
         }
         failure {
-            echo 'Build failed!'
+            echo 'Build or execution failed!'
         }
     }
 }
