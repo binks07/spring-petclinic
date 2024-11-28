@@ -25,7 +25,6 @@ pipeline {
             }
         }
         
-        }
         stage('Run Application') {
             steps {
                 // Run the application on a different port to avoid conflicts
