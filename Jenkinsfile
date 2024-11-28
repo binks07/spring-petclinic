@@ -3,39 +3,56 @@ pipeline {
     tools {
         maven 'Maven' // Use the defined Maven tool configuration in Jenkins
     }
+    environment {
+        SONARQUBE_SERVER = 'SonarQube' // This is the name you used in SonarQube Server Configuration in Jenkins
+        SONAR_SCANNER_HOME = tool 'SonarQube Scanner' // This is the name of the SonarQube Scanner in Jenkins Tool Configuration
+    }
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/spring-projects/spring-petclinic.git'
+                git branch: 'main', url: 'https://github.com/spring-projects/spring-petclinic.git'
+            }
+        }
+        stage('Clean') {
+            steps {
+                echo 'Cleaning up previous build artifacts...'
+                sh 'rm -rf target' // Clean up the previous build's target directory
             }
         }
         stage('Build') {
             steps {
-                // Give permission to run the Maven wrapper and build the application
                 sh '''
                     chmod +x mvnw
                     ./mvnw clean package -DskipTests
                 '''
             }
         }
-        stage('Execute') {
+        stage('SonarQube Analysis') {
             steps {
-                // Run the application on port 8085
+                withSonarQubeEnv('SonarQube') {
+                    sh './mvnw sonar:sonar \
+                        -Dsonar.projectKey=spring-petclinic \
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.login=sqp_5deb1532622f5b9e700843d9aed3882edba66a5d
+                }
+            }
+        }
+        stage('Run Application') {
+            steps {
                 sh '''
                     cd target
                     nohup java -jar spring-petclinic-*.jar --server.port=8085 > petclinic.log 2>&1 &
-                    sleep 300
+                    sleep 60
                 '''
             }
         }
     }
     post {
         success {
-            echo 'Build and execution completed successfully! Application is running at http://localhost:8085'
+            echo 'Build, SonarQube analysis, and execution completed successfully! Application is running at http://localhost:8085'
         }
         failure {
-            echo 'Build or execution failed!'
+            echo 'Build, analysis, or execution failed!'
         }
     }
 }
