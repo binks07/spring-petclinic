@@ -6,6 +6,7 @@ pipeline {
     environment {
         SONARQUBE_SERVER = 'SonarQube' // This is the name you used in SonarQube Server Configuration in Jenkins
         SONAR_SCANNER_HOME = tool 'SonarQube Scanner' // This is the name of the SonarQube Scanner in Jenkins Tool Configuration
+        SONAR_AUTH_TOKEN = 'sqp_5deb1532622f5b9e700843d9aed3882edba66a5d' // SonarQube Authentication Token
     }
     stages {
         stage('Checkout') {
@@ -21,6 +22,7 @@ pipeline {
         }
         stage('Build') {
             steps {
+                // Build the application
                 sh '''
                     chmod +x mvnw
                     ./mvnw clean package -DskipTests
@@ -30,15 +32,18 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('SonarQube') {
-                    sh './mvnw sonar:sonar \
+                    sh '''
+                        ./mvnw sonar:sonar \
                         -Dsonar.projectKey=spring-petclinic \
                         -Dsonar.host.url=$SONAR_HOST_URL \
-                        -Dsonar.login=sqp_5deb1532622f5b9e700843d9aed3882edba66a5d
+                        -Dsonar.login=$SONAR_AUTH_TOKEN
+                    '''
                 }
             }
         }
         stage('Run Application') {
             steps {
+                // Run the application on a different port to avoid conflicts
                 sh '''
                     cd target
                     nohup java -jar spring-petclinic-*.jar --server.port=8085 > petclinic.log 2>&1 &
